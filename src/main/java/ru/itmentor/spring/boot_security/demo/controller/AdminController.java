@@ -1,18 +1,14 @@
 package ru.itmentor.spring.boot_security.demo.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import ru.itmentor.spring.boot_security.demo.model.Role;
+import ru.itmentor.spring.boot_security.demo.dto.UserDto;
 import ru.itmentor.spring.boot_security.demo.model.User;
-import ru.itmentor.spring.boot_security.demo.repository.RoleRepository;
 import ru.itmentor.spring.boot_security.demo.service.UserService;
 
-import java.util.HashSet;
 import java.util.List;
 
-@Controller
+@RestController
 @RequestMapping("/admin")
 public class AdminController {
 
@@ -23,40 +19,39 @@ public class AdminController {
     }
 
 
-    @GetMapping
-    public String listUsers(Model model) {
-        model.addAttribute("users", userService.getAllUsers());
-        return "users";
+    @GetMapping("/show/all")
+    public List<UserDto> listUsers() {
+        return userService.getAllUsers()
+                .stream()
+                .map(UserDto::new) // Преобразуем каждый User в UserDto
+                .toList();
     }
 
 
-    @GetMapping("/new")
-    public String showAddUserForm(Model model) {
-        model.addAttribute("user", new User());
-        model.addAttribute("allRoles", userService.getAllRoles());
-        return "addUser";
+    @GetMapping("/show/{id}")
+    public UserDto showUser(@PathVariable int id) {
+        return new UserDto(userService.getUser(id));
     }
 
-    @PostMapping
-    public String saveUser(@ModelAttribute("user") User user) {
+    @PostMapping("/add")
+    public String saveUser(@ModelAttribute UserDto userDto) {
+        User user = new User();
+        user.setUsername(userDto.getUsername());
+        user.setPassword(userDto.getPassword());
+        user.setRoles(userService.getRolesByName(userDto.getRoles()));
         userService.saveUser(user);
-        return "redirect:/admin";
+        return "User " + user.getUsername() + " added";
     }
 
-    @PatchMapping("/edit/{id}")
-    public String editUser(@ModelAttribute("user") User user) {
+    @PutMapping("/edit/{id}")
+    public String editUser(@PathVariable int id,@RequestBody UserDto userDto) {
+        User user = new User();
+        user.setId(id);
+        user.setUsername(userDto.getUsername());
+        user.setPassword(userDto.getPassword());
+        user.setRoles(userService.getRolesByName(userDto.getRoles()));
         userService.saveUser(user);
-        return "redirect:/admin";
-    }
-
-
-    @GetMapping("/edit/{id}")
-    public String showEditUserForm(@PathVariable int id, Model model) {
-        User user = userService.getUser(id);
-        List<Role> roles = userService.getAllRoles();
-        model.addAttribute("user", user);
-        model.addAttribute("allRoles", roles);
-        return "editUser";
+        return "User " + user.getUsername() + " edited";
     }
 
 
@@ -64,6 +59,6 @@ public class AdminController {
     @DeleteMapping("/delete/{id}")
     public String deleteUser(@PathVariable int id) {
         userService.deleteUser(id);
-        return "redirect:/admin";
+        return "User with id " + id + " deleted";
     }
 }

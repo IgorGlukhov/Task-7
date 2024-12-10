@@ -1,45 +1,29 @@
 package ru.itmentor.spring.boot_security.demo.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+import ru.itmentor.spring.boot_security.demo.dto.UserDto;
 import ru.itmentor.spring.boot_security.demo.model.User;
-import ru.itmentor.spring.boot_security.demo.service.RegisterService;
 import ru.itmentor.spring.boot_security.demo.service.UserService;
 
-@Controller
+@RestController
 @RequestMapping("/auth")
 public class AuthController {
-    private final RegisterService registerService;
     private final UserService userService;
 
     @Autowired
-    public AuthController(RegisterService registerService, UserService userService) {
-        this.registerService = registerService;
+    public AuthController(UserService userService) {
         this.userService = userService;
     }
 
-    @GetMapping("/login")
-    public String loginPage() {
-        return "auth/login";
-    }
-
     @GetMapping("/registration")
-    public String registerPage(Model model) {
-        model.addAttribute("user", new User());
-        model.addAttribute("allRoles", userService.getAllRoles());
-        return "auth/registration";
+    public UserDto registerPage() {
+        return new UserDto(new User());
     }
 
     @PostMapping("/registration")
     public String performRegistration(@ModelAttribute("user") User user) {
-        registerService.register(user);
-
-        return "redirect:/auth/login";
+        userService.saveUser(user);
+        return "User " + user.getUsername() + " registered successfully";
     }
 }

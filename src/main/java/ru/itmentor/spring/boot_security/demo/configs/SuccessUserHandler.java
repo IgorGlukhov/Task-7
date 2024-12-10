@@ -18,18 +18,12 @@ public class SuccessUserHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Authentication authentication) throws IOException {
         Set<String> roles = AuthorityUtils.authorityListToSet(authentication.getAuthorities());
         if (roles.contains("ROLE_ADMIN")) {
-            httpServletResponse.sendRedirect("/admin");
+            httpServletResponse.sendRedirect("/admin/show/all");
         } else
         if (roles.contains("ROLE_USER")) {
-            Object principal = authentication.getPrincipal();
-            Integer userId = null;
 
-            if (principal instanceof User) {
-                userId = ((User) principal).getId();
-            }
-
-            if (userId != null) {
-                httpServletResponse.sendRedirect("/user/" + userId); // Перенаправление на URL с ID
+            if (authentication.getPrincipal() instanceof User user) {
+                httpServletResponse.sendRedirect("/user/show/" + user.getId()); // Перенаправление на URL с ID
             } else {
                 httpServletResponse.sendRedirect("/login?error=missing_user_id");
             };
